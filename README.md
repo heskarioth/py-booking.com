@@ -12,9 +12,19 @@
 
 
 ## General Info
-In the past few weeks,  I decided that I wanted to build
-Over the last week, I have been working on a hostelworld/airbnb/booking.com aggregatator as I am building a web service that lets you find the cheapest accomodation close to your gps location (or set location). Personally, I love hostels. They're the best options for solo backpackers as they're as cheap as they can get, but, more importantly and more often than not, they are filled with likeminded people who are looking for the next adventure. In my second solo trip to South East Asia, I literally jumped between 20 different hostels in 35 days. Why so many in such a short time? I wanted to check out as many hostels as possible so that during my next 'perfect' trip, I would know which palaces to go back to and which ones to avoid. Nevertheless, all of them were unique in their own way.
-Me being me, it is only natural that I would look into how many actual hostels are out there and analyse the data to see if I can gain some useful insights. Building this API is hte first step of that process.
+After building an automated end-to-end video hosting website (using Python for backend automation and WordPress for content management system), I have decided to start another side project. Essentially, I want to build a web app that, given my current location (gps coordinates or input location), will find me the cheapest accommodation (airbnb, hostel, spareroom, hotel, you name it) nearby based on different criterias like date, price range, etc. Ideally the website will comprise 5-6 different accommodation providers; currently in the works we have: airbnb, hostelworld and booking.com data. I'm planning on developing the front-end in Angular (in which, I have no prior experience) and have python jobs on the backend for search logic, backend and data retrieval (essentially, everything except the front end). 
+I have already developed an api for hostelworld and the pipeline logic to extract data from airbnb.com as well. I was missing booking.com, which is what this repo is about.
+After browsing the web, I have found that, conversely to airbnb/hostelworld, booking.com does have an API for users. Naturally, I felt enthusiastic at the thought that I could simply use their API to get the data I needed. 
+But wait. Not so fast. After applying to get access to their API, I received an automated rejection email (similar to the ones I kept getting back in university when applying for jobs) 
+
+![RejectedBooking.comAPI](imgs/bookingcomAPI.PNG)
+
+No problem buddy. I decided to build my own. 
+
+Lastly, I haven't found any unofficial booking.com API here in github. So yes. If you need it, please feel free to steal whatever you need. Figuring out the right request parameters and div classes structure to scrape did take a while. Enjoy.
+
+PS
+<i>'Cheapest accommodation near me'</i> represents the MVP idea. Ideally I want to extend this project and turn it into a fully fledge trip planner capable of suggest me best places to stay based on number of days I want to stay in a given city, distance I want to travel, money budget, attractions I want to see and more. Stay tuned.
 
 ## Technologies
 The code is written in python using Beatifulsoup and multithreading to boost up response time.
