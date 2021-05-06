@@ -6,7 +6,7 @@
 * [Technologies](#technologies)
 * [Setup](#setup)
 * [Usage Examples](#usage-examples)
-* [Sample Response body](#response-examples)
+* [Response Example](#response-examples)
 * [Features](#features)
 * [Status](#status)
 
