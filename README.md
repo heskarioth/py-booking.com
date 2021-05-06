@@ -229,15 +229,14 @@ Below a sample response body. Number of columns tend to vary but the average is 
 
 ## Features
 List of features ready and TODOs for future development
-* get_hostel_by_country_name
-* get__hostel_by_city_name
-* get__hostel_by_city_name_multiple_locations
-* get_hostel_review_by_hostel_id
-* get_hostel_availability_by_hostel_id_date
+* get_available_listings_per_country
+* get_available_listings_per_city
 
 To-do list:
 
-* ~~Get hostels' reviews 
+* <strike>get</strike>
+* get_all_listings_per_country
+* get_all_listings_per_city
 * Upload package to pypi.org
 * create swagger endpoints.
 * Find available listings per multiple cities.
