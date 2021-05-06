@@ -35,7 +35,7 @@ The code is written in python using Beatifulsoup and multithreading to boost up 
 
 ## Setup
 - After cloning the repo. pip install the requirements.txt.
-- Following the above changes, you can execute the script via terminal: python beautifulsoup.py
+- Following the above changes, you can execute the script via terminal: python bookingcom.py
 
 ## Usage Examples
 Instantiate the class
