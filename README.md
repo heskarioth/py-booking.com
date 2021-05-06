@@ -1,5 +1,7 @@
 # py-booking.com
-> Booking.com refused me access to their API. No problem. I decided to build my own.
+> Booking.com refused to grant me access to their API. <br>
+> No problem. <br>
+> I decided to build my own.<br>
 
 ## Table of contents
 * [General Info](#general-info)
