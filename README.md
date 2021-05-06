@@ -38,7 +38,7 @@ Instantiate the class
 ```python
 hw = Bookingcom()
 ```
-Show me all the hotels in Greenland between 12th and 15th August. Always want to go to Greenland and I heard that summer is the best time with highs hitting 9.5°C.
+Show me all the hotels in Greenland between 12th and 15th August. Always want to go to Greenland and I heard that summer is the best time with highs hitting 9.5°C. Let's see.
 ```python
 country_name ='Greenland'
 checkin_date = '2021-08-12'
@@ -56,32 +56,6 @@ bk.get_available_listings_per_city(city_name,checkin_date,checkout_date)
 ```
 ![HostelByCityName](imgs/GetAvailableListingsPerCity.PNG)
 
-Sometimes countries like to name their cities with city names already present in other countries. 
-```python
-hw.get__hostel_by_city_name_multiple_locations('Westport')
-```
-![HostelByCityNameMultipleLocationsMultipleCountries](imgs/HostelByCityNameMultipleLocationsMultipleCountries.PNG)
-
-But what if we only want to see the results in Ireland?
-```python
-hw.get__hostel_by_city_name_multiple_locations('Westport','Ireland')
-```
-![HostelByCityNameMultipleLocationsSingleCountry](imgs/HostelByCityNameMultipleLocationsSingleCountry.PNG)
-
-If we want to check out reviews for a single hostel we have to insert the hostel_id that we get from any of the previous methods
-```python
-hw.get_hostel_review_by_hostel_id(100962)
-```
-![GetHostelReviewsById](imgs/get_hostel_review_by_hostel_id.PNG)
-
-Ok. We've decided that we want to check out that hostel. Is it available? We check availability by choosing check-in date and how long we plan on staying.
-```python
-hostel_id = 100962
-start_date = '2021-06-23'
-n_nights=10 #max value 30
-hw.get_hostel_availability_by_hostel_id_date(hostel_id,start_date,n_nights).T
-```
-![GetHostelAvailabilityByIdDate](imgs/get_hostel_availability_by_hostel_id_date.PNG)
 
 ## Response Example
 Below a sample response body. Number of columns tend to vary but the average is roughly of 150-200 columns.
@@ -262,15 +236,14 @@ List of features ready and TODOs for future development
 * get_hostel_availability_by_hostel_id_date
 
 To-do list:
-* ~~Check hostels' availability given defined timeframe~~
-* ~~Get hostels' reviews~~ Include, city_name, country_name, hostel_name, hostel_id in response dataframe
+
+* ~~Get hostels' reviews 
 * Upload package to pypi.org
-* create swagger endpoints
+* create swagger endpoints.
+* Find available listings per multiple cities.
 * Extend code to retrieve all room options, not just the cheapest room.
 * Search hotel name.
-* Store places id in mongodb file (currently saved in csv).
-* Replace requests with sessions and Retry objects.
-* Introduce multithreading
+* Change storage to mongodb (currently saved in csv).
 
 ## Status
 Project is: _in progress_
