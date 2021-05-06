@@ -69,7 +69,7 @@ hw.get_hostel_availability_by_hostel_id_date(hostel_id,start_date,n_nights).T
 ## Response Example
 Below a sample response body. Number of columns tend to vary but the average is roughly of 150-200 columns.
 ```json
-{'@type': 'Hotel',
+{"@type": 'Hotel',
  'Ammendity_Airport Shuttle': 0.0,
  'Ammendity_Bar': 0.0,
  'Ammendity_Beach front': 0.0,
