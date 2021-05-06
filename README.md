@@ -12,9 +12,11 @@
 
 
 ## General Info
-After building an automated end-to-end video hosting website (using Python for backend automation and WordPress for content management system), I have decided to start another side project. Essentially, I want to build a web app that, given my current location (gps coordinates or input location), will find me the cheapest accommodation (airbnb, hostel, spareroom, hotel, you name it) nearby based on different criterias like date, price range, etc. Ideally the website will comprise 5-6 different accommodation providers; currently in the works we have: airbnb, hostelworld and booking.com data. I'm planning on developing the front-end in Angular (in which, I have no prior experience) and have python jobs on the backend for search logic, backend and data retrieval (essentially, everything except the front end). 
-I have already developed an api for hostelworld and the pipeline logic to extract data from airbnb.com as well. I was missing booking.com, which is what this repo is about.
-After browsing the web, I have found that, conversely to airbnb/hostelworld, booking.com does have an API for users. Naturally, I felt enthusiastic at the thought that I could simply use their API to get the data I needed. 
+After building an automated end-to-end video hosting website (using Python for backend automation and WordPress for content management system), I have decided to start another side project. Essentially, I want to build a web app that, given my current location (gps coordinates or input location), will find me the cheapest accommodation (airbnb, hostel, spareroom, hotel, you name it) nearby based on different criterias like date, price range, etc. Ideally the website will comprise 5-6 different accommodation providers; currently in the works we have: airbnb, hostelworld and booking.com data. I'm planning on developing the front-end in Angular (in which, I have no prior experience) and have python jobs on the backend for search logic, backend and data retrieval (essentially, everything except the front end). I have already developed an api for hostelworld and the pipeline logic to extract data from airbnb.com as well.<br>
+I was missing booking.com, which is what this repo is about.<br>
+
+After browsing the web, I have found that, conversely to airbnb/hostelworld, booking.com does have an API for users. Naturally, I felt enthusiastic at the thought that I could simply use their API to get the data I needed.<br>
+
 But wait. Not so fast. After applying to get access to their API, I received an automated rejection email (similar to the ones I kept getting back in university when applying for jobs).
 
 ![RejectedBooking.comAPI](imgs/bookingcomAPI.PNG)
