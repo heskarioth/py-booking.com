@@ -15,13 +15,13 @@
 After building an automated end-to-end video hosting website (using Python for backend automation and WordPress for content management system), I have decided to start another side project. Essentially, I want to build a web app that, given my current location (gps coordinates or input location), will find me the cheapest accommodation (airbnb, hostel, spareroom, hotel, you name it) nearby based on different criterias like date, price range, etc. Ideally the website will comprise 5-6 different accommodation providers; currently in the works we have: airbnb, hostelworld and booking.com data. I'm planning on developing the front-end in Angular (in which, I have no prior experience) and have python jobs on the backend for search logic, backend and data retrieval (essentially, everything except the front end). 
 I have already developed an api for hostelworld and the pipeline logic to extract data from airbnb.com as well. I was missing booking.com, which is what this repo is about.
 After browsing the web, I have found that, conversely to airbnb/hostelworld, booking.com does have an API for users. Naturally, I felt enthusiastic at the thought that I could simply use their API to get the data I needed. 
-But wait. Not so fast. After applying to get access to their API, I received an automated rejection email (similar to the ones I kept getting back in university when applying for jobs) 
+But wait. Not so fast. After applying to get access to their API, I received an automated rejection email (similar to the ones I kept getting back in university when applying for jobs).
 
 ![RejectedBooking.comAPI](imgs/bookingcomAPI.PNG)
 
 No problem buddy. I decided to build my own. 
 
-Lastly, I haven't found any unofficial booking.com API here in github. So yes. If you need it, please feel free to steal whatever you need. Figuring out the right request parameters and div classes structure to scrape did take a while. Enjoy.
+Lastly, I haven't found any unofficial booking.com API here in GitHub. So yes. If you need it, please feel free to steal whatever you need. Figuring out the right request parameters and div classes structure to scrape did take a while. Enjoy.
 
 PS
 <i>'Cheapest accommodation near me'</i> represents the MVP idea. Ideally I want to extend this project and turn it into a fully fledge trip planner capable of suggest me best places to stay based on number of days I want to stay in a given city, distance I want to travel, money budget, attractions I want to see and more. Stay tuned.
@@ -36,19 +36,25 @@ The code is written in python using Beatifulsoup and multithreading to boost up 
 ## Usage Examples
 Instantiate the class
 ```python
-hw = booking()
+hw = Bookingcom()
 ```
-Show me all the hotels in Afghanistan
+Show me all the hotels in Greenland between 12th and 15th August. Always want to go to Greenland and I heard that summer is the best time with highs hitting 9.5°C.
 ```python
-hw.get_hostel_by_country_name('South Africa')
+country_name ='Greenland'
+checkin_date = '2021-08-12'
+checkout_date = '2021-08-15'
+bk.get_available_listings_per_country(country_name,checkin_date,checkout_date)
 ```
-![HostelByCountryName](imgs/get_hostel_by_country_name.PNG)
+![GetAvailableListingsPerCountry](imgs/GetAvailableListingsPerCountry.PNG)
 
-Show me all the hostels in Hanoi
+Interesting, what if we only want to check out the city of Nuuk?
 ```python
-hw.get__hostel_by_city_name('Hanoi')
+city_name ='Nuuk'
+checkin_date = '2021-08-12'
+checkout_date = '2021-08-15'
+bk.get_available_listings_per_city(city_name,checkin_date,checkout_date)
 ```
-![HostelByCityName](imgs/get__hostel_by_city_name.PNG)
+![HostelByCityName](imgs/GetAvailableListingsPerCity.PNG)
 
 Sometimes countries like to name their cities with city names already present in other countries. 
 ```python
