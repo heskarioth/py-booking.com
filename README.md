@@ -249,6 +249,8 @@ To-do list:
 * ~~Get hostels' reviews~~ Include, city_name, country_name, hostel_name, hostel_id in response dataframe
 * Upload package to pypi.org
 * create swagger endpoints
+* Extend code to retrieve all room options, not just the cheapest room.
+* Search hotel name.
 * Store places id in mongodb file (currently saved in csv).
 * Replace requests with sessions and Retry objects.
 * Introduce multithreading
