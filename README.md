@@ -21,7 +21,7 @@ But wait. Not so fast. After applying to get access to their API, I received an 
 
 No problem buddy. I decided to build my own. 
 
-Lastly, I haven't found any unofficial booking.com API here in GitHub. So yes. If you need it, please feel free to steal whatever you need. Figuring out the right request parameters and div classes structure to scrape did take a while. Enjoy.
+Lastly, I haven't found any unofficial booking.com API here in GitHub. So yes, feel free to steal whatever you need. Figuring out the right Requests parameters and div classes structure to scrape did take me a while, no need for you to do the same. Enjoy.
 
 PS
 <i>'Cheapest accommodation near me'</i> represents the MVP idea. Ideally I want to extend this project and turn it into a fully fledge trip planner capable of suggest me best places to stay based on number of days I want to stay in a given city, distance I want to travel, money budget, attractions I want to see and more. Stay tuned.
