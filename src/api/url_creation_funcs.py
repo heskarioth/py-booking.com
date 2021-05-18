@@ -45,12 +45,13 @@ def reference_table_creation_place_get_all_pages_urls_offsets(number_listings,de
     
 
 def reference_table_creation_place_get_all_pages_urls_single_result(list_urls):
-    
+    headers = {'User-Agent':"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36"}
     def concurrency_get_single_urls(url):
         single_urls = []
-        r = requests.get(url,headers=headers)
-        soup = BeautifulSoup(r.text, 'html.parser')
-        n_results = len(soup.find_all('a',{'class':'js-sr-hotel-link hotel_name_link url'}))
+        with requests.Session() as session:
+            r = session.get(url,headers=headers)
+            soup = BeautifulSoup(r.text, 'lxml')
+            n_results = len(soup.find_all('a',{'class':'js-sr-hotel-link hotel_name_link url'}))
         
         for idx in range(n_results):
             href = (soup.find_all('a',{'class':'js-sr-hotel-link hotel_name_link url'})[idx].get('href').replace('\n',''))

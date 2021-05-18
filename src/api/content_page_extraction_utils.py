@@ -10,8 +10,9 @@ import concurrent.futures
 import time
 import traceback
 import itertools
+from collections import defaultdict
 
-headers = {'User-Agent':"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36"}
+
 base_url = 'https://www.booking.com/'
 
 
@@ -19,44 +20,54 @@ def extract_data_from_listing(single_urls,checkin_date,checkout_date):
     
     def councurrency_extraction(single_url):
         df_hotel_details = pd.DataFrame()
-        r = requests.get(single_url,headers=headers)
-        soup = BeautifulSoup(r.text, 'html.parser')
-        tmp = json.loads("".join(soup.find("script", {"type":"application/ld+json"}).contents))
-        try:
-            page_details = get_page_details_main(soup)
-            hotel_details = parse_hotel_location(tmp)
-        except IndexError:
-            print('Error')
-            print(single_url)
-            traceback.print_exc()
-            pass
-        #if the hotel is not available for that given date, no point taking the details
-        if page_details is not None:
-            hotel_details.update(page_details)
-        else:
-            #print('"{}" in {} has no rooms available during your travel period.\nCheck other dates at: {}\n-------------------------------------------------------------------------'.format(hotel_details['name'],hotel_details['address_streetAddress'],single_url))
-            pass
+        with requests.Session() as session:
+            t1 = time.perf_counter()
+            headers={"Content-Type": "application/json"
+                     ,'Accept-Encoding': 'gzip, deflate'
+                     ,"x-cache":"HIT","Connection": "keep-alive"
+                    ,'User-Agent':"Mozilla/5.0 (Linux; Android 8.0.0; SM-G960F Build/R16NW) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.84 Mobile Safari/537.36"
+                    }
             
-        df_hotel_details = pd.concat([df_hotel_details,pd.DataFrame(hotel_details,index=[0])])
-        #df_hotel_details = pd.DataFrame(hotel_details,index=[0])
+            r = session.get(single_url,headers=headers)
+            soup = BeautifulSoup(r.text, 'lxml')
+            tmp = json.loads("".join(soup.find("script", {"type":"application/ld+json"}).contents))
+            try:
+                
+                t1 = time.perf_counter()
+                page_details = get_page_details_main(soup)
+                t2 = time.perf_counter()
+                hotel_details =  parse_hotel_location(tmp) #
+            except IndexError:
+                print('Error')
+                print(single_url)
+                traceback.print_exc()
+                pass
+            #if the hotel is not available for that given date, no point taking the details
+            if page_details is not None:
+                hotel_details.update(page_details)
+            
+        df_hotel_details = pd.concat([df_hotel_details,pd.DataFrame(hotel_details,index=[0])]) #
+        
         return df_hotel_details
         
-    single_urls = fix_single_urls_with_checkin_out_dates(single_urls,checkin_date,checkout_date)
     single_dfs = []
     
-    with concurrent.futures.ThreadPoolExecutor() as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
         results = executor.map(councurrency_extraction, single_urls)
         for result in results:
             single_dfs.append(result)
-            
+           
     return single_dfs
+
 
 #helper functions for extract_data_from_listing
 def get_page_details_main(soup):
-    
-    availability_message = (soup.find('div',{'id':'no_availability_msg'}))
+
+    availability_message = soup.find('div',{'id':'availability'}).find('div',{'class':'u-font-size:12 c-alert c-alert--red no_availability_banner_wrapper'})
     if availability_message is not None:
-        if availability_message.span.get_text().strip()=='Sorry, this hotel has no rooms available for the dates of your stay':
+        no_availability_options = ['Sorry, this hotel has no rooms available for the dates of your stay','Sorry this property has no availability on our site for your dates',"Not available on our site – sorry, this property isn't available for the dates you selected."]
+        if availability_message.get_text().strip() in no_availability_options:
+            #print('No room available.')
             return None
     else:
         """
@@ -67,109 +78,83 @@ def get_page_details_main(soup):
         will represent the cheapest available plan.
 
         """
-        body = soup.find('table').find('tbody') #set up the body
-
-        for tr in body.find_all('tr'): #per row
-
-            for td in (tr('td',{'class':'hprt-table-cell -first hprt-table-cell-roomtype droom_seperator'})):
-
-                #room name and bed type
-                room_type = (td.find('span',{'class':'hprt-roomtype-icon-link'}).get_text().strip())
-                room_bed_type = get_page_details_room_bed_type(td)
-
-                #facilities included in the booking
-                facilities_dict = get_page_details_facilities_list(td)
-
-                #get room price
-                potential_room_price_divs = ['bui-price-display__value prco-inline-block-maker-helper prco-f-font-heading','bui-price-display__value prco-text-nowrap-helper prco-inline-block-maker-helper prco-f-font-heading']
-                
-                
-                #room_price = get_page_details_room_price_occupancy(tr,'bui-price-display__value prco-text-nowrap-helper prco-inline-block-maker-helper prco-f-font-heading')
-                room_price = get_page_details_room_price_occupancy(tr,potential_room_price_divs)
-                
-                #get room occupancy
-                potential_room_occupancy_divs = ['c-occupancy-icons hprt-occupancy-occupancy-info']
-                room_occupancy = get_page_details_room_price_occupancy(tr,potential_room_occupancy_divs)
-
-            #check that we got the numbers from the cheapest block; if so, exit loop.
-            try:
-                if 'js-hprt-table-cheapest-block' in tr.get('class'):
-                    break
-            except TypeError:
-                pass
+        room_price = get_page_details_room_info(soup)
+        
+        #facilities included in the booking
+        facilities_dict = get_page_details_facilities_list(soup)
 
         # get description hotel
-        property_description = soup.find('div',{'id':'property_description_content'}).get_text().strip()
+        property_description = ''.join([str(x).strip().replace('<br/>','') for x in soup.find('div',{'class':'property_description_drawer__content'}).find('p').contents])
 
         # get ratings from hotel
         ratings = get_page_details_ratings(soup)
-
+        
         ##hotel ammendity details
         ammendities_dict = get_page_details_ammendities(soup)
-
+        
         #get hotel_ids
         hotel_ids_dict = get_page_details_hotel_ids(soup)
-
+        
         #compile response object
-        page_details = get_page_details_response_object(room_price,room_type,room_bed_type,room_occupancy,property_description,facilities_dict,ammendities_dict,ratings,hotel_ids_dict)
+        page_details = get_page_details_response_object(room_price,facilities_dict,property_description,ratings,ammendities_dict,hotel_ids_dict)
 
         return page_details
 
 
 #-------------------------------------------------------------
 #part 3.1 helper functions for get_page_details_main
-def get_page_details_room_bed_type(td):
-    #get the bed type
-    try:
-        if (td.find('li',{'class':'rt-bed-type'})) is not None:
-            room_bed_type = (td.find('li',{'class':'rt-bed-type'}).span.get_text().strip())
-        else:
-            room_bed_type = td.find('span',{'class':'hprt-roomtype-icon-link'}).get_text().strip()
-    except AttributeError:
-        room_bed_type = td.find('li',{'class':'bedroom_bed_type'}).get_text().strip()
-    return room_bed_type
+def get_page_details_facilities_list(soup):
 
-def get_page_details_facilities_list(td):
-    """
-    Input: td - column from soupe table.
-    Output: list of facilities for that room option.
-    """
-    facilities_list = []
-    for idx in range(len(td.find('div',{'class':'hprt-facilities-block'}).find_all('div',{'class':'hprt-facilities-facility'}))):
-        facilities_list.append(td.find('div',{'class':'hprt-facilities-block'}).find_all('div',{'class':'hprt-facilities-facility'})[idx].span.get_text().strip())
-    
-    #sometimes, listings don't have facilities listed under section 'others'. We check if that is the case, if not. Extract data.
-    if (td.find('ul',{'class':'hprt-facilities-others'})) is not None:
-        n_loops =len(td.find('ul',{'class':'hprt-facilities-others'}).find_all('span',{'class':'hprt-facilities-facility'}))
-        for idx in range(n_loops):
-            facilities_list.append(td.find('ul',{'class':'hprt-facilities-others'}).find_all('span',{'class':'hprt-facilities-facility'})[idx].span.get_text().strip())
+    for idx,script in enumerate(soup.find_all('script')):
+        if 'b_booking_rooms_facilities' in str(script):
+            
+            #get room facilities
+            data = re.search(r'b_booking_rooms_facilities:.*(.*?)',(soup.find_all('script')[idx]).contents[0]).group(0).replace('b_booking_rooms_facilities: ','')[:-1]
+            facilities = json.loads(data)
+            facilities_dict = {}
+            for key_f in facilities.keys():
+                for f in facilities[key_f]:
+                    facilities_dict[f['name']]=f['highlighted']
+            facilities_dict = {'Facility_'+facility:value for facility,value in facilities_dict.items()}
+            return facilities_dict
+    return {}
 
-    facilities_list = ['Facility_'+facility for facility in facilities_list]
-    facilities_dict= {facility:1 for facility in facilities_list}
 
-    return facilities_dict
 
-def get_page_details_room_price_occupancy(tr,div_classes):
-    """
-    Input: 
-    - tr -> of soupe table
-    - div_class -> class to inspect in loop function
-    Output:
-    If div_class = bui-price-display__value prco-text-nowrap-helper prco-inline-block-maker-helper prco-f-font-heading
-       function will return room_price
-    If div_class = c-occupancy-icons hprt-occupancy-occupancy-info
-       function will return room_occupancy
-    """
-    for _ in range(len(tr.find_all('td'))):
-        for div_class in div_classes:
-            parsed_value = tr.find_all('td')[_].find('div',{'class':div_class})
-            if parsed_value is not None:
-                try:
-                    output_value = (parsed_value.span.get_text().strip())
-                except AttributeError:
-                    output_value = (parsed_value.get_text().strip())
-    return output_value
+def get_page_details_room_info(soup):
+    for idx,script in enumerate(soup.find_all('script')):
+        if 'b_room_blocks_json' in str(script):
+            data = re.search(r'b_room_blocks_json:.*(.*?)',(soup.find_all('script')[idx]).contents[0]).group(0).replace('b_room_blocks_json: ','')[:-1]
+            data = json.loads(data)
+            list_indexes = list(data.keys())
 
+            #get all bookings available for that hotel
+            room_price_info = defaultdict(dict)
+            for idx in range(len(list_indexes)):
+                room = data[list_indexes[idx]]
+                room_price_info[idx]['pricePerNight'] = room['pricePerNight']
+                room_price_info[idx]['price'] = room['price']
+                room_price_info[idx]['maxPersons'] = room['maxPersons']
+                room_price_info[idx]['roomName'] = room['roomName']
+                room_price_info[idx]['maxPersons'] = room['maxPersons']
+                if 'preferences' in room.keys():
+                    if 'bedPreference' in room['preferences']:
+                        bed_type_option_given_price = []
+                        for _ in range(len(room['preferences']['bedPreference'])):
+                            bed_type = room['preferences']['bedPreference'][_]
+                            for i in range(len(bed_type['bed_type'])):
+                                bed_type_option_given_price.append(bed_type['bed_type'][i].get('name_withnumber'))
+                        room_price_info[idx]['bedType'] = "~".join([room for room in bed_type_option_given_price])
+
+            #save the cheapest one as single response, wrap together the rest
+            series_p = pd.Series(dtype=np.float64)
+            for dict_idx in room_price_info:
+                series_p = pd.concat([series_p,pd.Series(room_price_info[dict_idx]['price'],index=[dict_idx],dtype=np.float64)])
+            best_priced_room = room_price_info[series_p.idxmin()]['pricePerNight']
+            best_priced_room_info= json.dumps(room_price_info[series_p.idxmin()])
+            all_priced_rooms = json.dumps(room_price_info)
+            return {'best_priced_room':best_priced_room,'best_priced_room_info':best_priced_room_info,'all_priced_rooms':all_priced_rooms}
+        
 def get_page_details_ratings(soup):
     # get ratings from hotel
     n_ratings = len(soup.find_all('div',{'class':'c-score-bar'}))
@@ -179,50 +164,60 @@ def get_page_details_ratings(soup):
         ratings['Rating_'+rating_name]=soup.find_all('div',{'class':'c-score-bar'})[idx].find('span',{'class':'c-score-bar__score'}).get_text()
     return ratings
 
+
 def get_page_details_ammendities(soup):
-    ##hotel ammendity details
-    ammendities = [] 
-    for element in soup.find_all('div',{'class':'important_facility'}):
-        ammendities.append(element.get('data-name-en'))
+    
+    ammendities = []
+    objects = [('div',{'class':'bui-list__body'}),('span',{'class':'facilities__summary__name'})]
+    for object_single in objects:
+        ammendities_m_hp_accordion__shorttext = soup.find('div',{'id':'facilities'}).find('div',{'class':'m_hp_accordion__shorttext'}).find_all(object_single)
+        if (len(ammendities_m_hp_accordion__shorttext))>0:
+            break
+    for idx in range(len(ammendities_m_hp_accordion__shorttext)):
+        ammendities.append(ammendities_m_hp_accordion__shorttext[idx].get_text().strip())
+    ammendities = [ammendity for ammendity in ammendities if len(ammendity)>0]
+
+#     if (soup.find('ul',{'class':'hp-facility-columns js-hp-facility-columns m_hp_facilites_wrapper bui-list bui-list--text bui-list--divided'})) is not None:
+#         for category in (soup.find('ul',{'class':'hp-facility-columns js-hp-facility-columns m_hp_facilites_wrapper bui-list bui-list--text bui-list--divided'}).find_all('li',{'class':'bui-list__item'})):    
+#             try:
+#                 for subcategory in category.find_all('div',{'class':'bui-list__body'}):
+#                     main_category = (category.find('div',{'class':'m_hp_facilities_heading'}).text.strip().replace('\n',''))
+#                     subcategory = (subcategory.text.strip().replace('\n',' '))
+#                     ammendities.append('{}__{}'.format(main_category,subcategory))
+#             except AttributeError as attr:
+#                 pass
+#     else:
+#         for main_category in (soup.find('div',{'class':'facilities__body'})).find_all('h4',{'class':'facilities__group__title'}):
+#             for sub_category in (soup.find('div',{'class':'facilities__body'})).find_all('li',{'class':'facilities__item facilities__item--legacy'}):
+#                 ammendities.append('{}__{}'.format(main_category.text,sub_category.span.getText().strip()))
 
     ammendities = ['Ammendity_'+ammendity for ammendity in ammendities]
     ammendities_dict = {ammendity:1 for ammendity in ammendities}
     return ammendities_dict
 
 def get_page_details_hotel_ids(soup):
-    possible_location_script = [(soup.find_all('script',type="text/javascript"))[3],(soup.find_all('script',type="text/javascript"))[0]]
-    for idx in range(len(soup.find_all('script'))):
-        for script in possible_location_script:
-            try:
-                pattern = re.compile('hotel_id.*:.*\d+')
-                hotel_id = re.findall(pattern, script.string)[0].strip().replace('\'','')#.strip().split(':')[1].strip()
-                pattern = re.compile('stid.*:.*\d+')
-                stid = re.findall(pattern, script.string)[0].strip().replace('\'','').strip().split(':')[1].strip()
-                pattern = re.compile('dest_id.*:.*\d+')
-                dest_id = re.findall(pattern, script.string)[0].strip().replace('\'','').strip().split(':')[1].strip()
-                break
-            except IndexError:
-                pass
-
-    hotel_ids_dict = {'hotel_id':hotel_id,'stid':stid,'dest_id':dest_id}
+    #find which script has the info we need and take the index
+    for idx,script in enumerate(soup.find_all('script')):
+        if 'b_hotel_id' in str(script):
+            break
+    #get hotel id
+    hotel_id = int(re.search(r'b_hotel_id: .*(.*?)',(soup.find_all('script')[idx]).contents[0]).group(0).replace('b_hotel_id: ','')[:-1].replace('\'',''))  
+    #get stid
+    stid = int(re.search(r'b_stid: .*(.*?)',(soup.find_all('script')[idx]).contents[0]).group(0).replace('b_stid: ','')[:-1].replace('\'',''))
+    hotel_ids_dict = {'hotel_id':hotel_id,'stid':stid}
     return hotel_ids_dict
 
-def get_page_details_response_object(room_price,room_type,room_bed_type,room_occupancy,property_description,facilities_dict,ammendities_dict,ratings,hotel_ids_dict):
-    # combine all together in one single dict
-    page_details = {
-     'room_price':room_price
-     ,'room_type':room_type
-     ,'room_type_bed':room_bed_type
-     ,'room_occupancy':room_occupancy
-     ,'property_description':property_description
-    }
-    page_details.update(facilities_dict)
-    page_details.update(ammendities_dict)
+
+def get_page_details_response_object(room_price,facilities_dict,property_description,ratings,ammendities_dict,hotel_ids_dict):
+    page_details = {}
+    page_details.update(room_price)
     page_details.update(ratings)
     page_details.update(hotel_ids_dict)
+    page_details.update({'property_description':property_description})
+    page_details.update(facilities_dict)
+    page_details.update(ammendities_dict)
+    
     return page_details
-
-
 #-------------------------------------------------------------------------------
 # part 3.2 helper function for parse_hotel_location
 
@@ -237,7 +232,9 @@ def parse_hotel_location(hotel_details):
         ,'latitude':get_lat_long(hotel_details)[0]
         ,'longitude':get_lat_long(hotel_details)[1]
         ,'@type':hotel_details['@type']
-        ,'priceRange':hotel_details['priceRange']
+        
+        #,'priceRange':hotel_details['priceRange']
+        ,'priceRange': None if hotel_details['priceRange'] is None else re.search('\d+',hotel_details['priceRange']).group()
         ,'hasMap':hotel_details['hasMap']
         ,'description':hotel_details['description']
         ,'url':hotel_details['url']
@@ -276,12 +273,3 @@ def get_lat_long(hotel_details):
     coordinates = re.findall('[-]?[\d]+[.][\d]*',hotel_details['hasMap'])
     latitude,longitude = coordinates[:2]
     return latitude,longitude
-#-------------------------------------------------------------------------------
-
-# other functions for extract_data_from_listing
-def fix_single_urls_with_checkin_out_dates(single_urls,checkin_date,checkout_date):
-    for idx in range(len(single_urls)):
-        single_urls[idx] = single_urls[idx].replace('&from=searchresults;highlight_room=#hotelTmpl','&checkin={}&checkout={}'.format(checkin_date,checkout_date))
-        single_urls[idx] = str(re.sub(';highlight_room=.*','',single_urls[idx]))+'&checkin={}&checkout={}'.format(checkin_date,checkout_date)
-    single_urls = list(set(single_urls))
-    return single_urls

@@ -34,18 +34,21 @@ def get_available_listings_per_place_backend(self,place_name,checkin_date,checko
     
     checkin_year,checkout_month,checkout_monthday = generate_date_comb(checkin_date)
     checkout_year,checkout_month,checkout_monthday = generate_date_comb(checkout_date)
-
+    
     offset_urls = reference_table_creation_place_get_all_pages_urls_offsets(number_listings,dest_place_id,dest_type,checkin_year,checkout_month,checkout_monthday,checkout_year,checkout_month,checkout_monthday)
     
     single_urls = reference_table_creation_place_get_all_pages_urls_single_result(offset_urls)
     
+    single_urls = fix_single_urls_with_checkin_out_dates(single_urls,dest_place_id,dest_type,checkin_date,checkout_date)
     
-    print('Total listings found per in {} is {}'.format(place_name,len(single_urls)))
+    print('Total listings found in {} is {}'.format(place_name,len(single_urls)))
     single_dfs = extract_data_from_listing(single_urls,checkin_date,checkout_date)
-
+    
     df_listings_available = list_dfs_to_single_df(single_dfs)
+    
     print('Total listings available between your travel dates {}'.format(df_listings_available.shape[0]))
     return df_listings_available
+
 
 
 #======================================================================================================
@@ -81,8 +84,10 @@ def check_n_listings_for_selected_city(dest_id):
             "&group_adults=2&group_children=0"
             "&ac_position=0&ac_langcode=en&ac_click_type=b&dest_id={dest_id}&dest_type=city".format(
         dest_id=dest_id))
+    #print(url)
+    headers = {'User-Agent':"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36"}
     r = requests.get(url,headers=headers)
-    soup = BeautifulSoup(r.text, 'html.parser')
+    soup = BeautifulSoup(r.text, 'lxml')
     if ':' in soup.find('div',{'class':'sr_header'}).get_text().strip():
         number_listings = int(re.sub('\D+','',soup.find('div',{'class':'sr_header'}).get_text().strip()))
     else:
@@ -100,12 +105,12 @@ def generate_date_comb(date):
 
 
 # other functions for extract_data_from_listing
-def fix_single_urls_with_checkin_out_dates(single_urls,checkin_date,checkout_date):
+def fix_single_urls_with_checkin_out_dates(single_urls,dest_place_id,dest_type,checkin_date,checkout_date):
     for idx in range(len(single_urls)):
-        single_urls[idx] = single_urls[idx].replace('&from=searchresults;highlight_room=#hotelTmpl','&checkin={}&checkout={}'.format(checkin_date,checkout_date))
-        single_urls[idx] = str(re.sub(';highlight_room=.*','',single_urls[idx]))+'&checkin={}&checkout={}'.format(checkin_date,checkout_date)
+        single_urls[idx] = single_urls[idx].split('aid=',1)[0]+'aid=304142&label=gen173nr-1FCAQoggJCDWNpdHlfLTIwODQ2MTVICVgEaFCIAQGYAQm4ARfIAQzYAQHoAQH4AQaIAgGoAgO4Aur8jYUGwAIB0gIkODEwNDA1OGUtNmU0Yy00ODNkLTk3NDUtOTgwZTljMjFkYTM42AIF4AIB&sid=1be0c5c347b9211a7db5d9bc410dd13a&dest_id={}&dest_type={}&group_adults=2&group_children=0&hapos=7&hpos=1&no_rooms=1&sr_order=popularity&srepoch=1621327467&srpvid=9fc23d75192101cc&ucfs=1&sig=v10S0SrADj&checkin={}&checkout={}'.format(dest_place_id,dest_type,checkin_date,checkout_date)
     single_urls = list(set(single_urls))
     return single_urls
+
 
 #=========================================
 #part 4 final parsing 
