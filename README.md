@@ -58,7 +58,15 @@ checkin_date = '2021-08-12'
 checkout_date = '2021-08-15'
 bk.get_available_listings_per_city(city_name,checkin_date,checkout_date)
 ```
-![HostelByCityName](imgs/GetAvailableListingsPerCity.PNG)
+![GetAvailableListingsPerCity](imgs/GetAvailableListingsPerCity.PNG)
+
+What if I want to search the street address instead? 
+![GetAvailableListingsPerStreetAddress](imgs/GetAvailableListingsPerStreetAddress.PNG)
+NB I am still looking for a better API provider for the forward geosearch, unfortunately I have not been lucky enough to find one that provides consistent results (yet).
+
+Let's say I only know the coordinates of this place, how do I find out places, nearby? 
+![GetAvailableListingsPerGeoCoordinates](imgs/GetAvailableListingsPerGeoCoordinates.PNG)
+
 
 
 ## Response Example
